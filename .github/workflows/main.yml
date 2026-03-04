@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15-intel
+    runs-on: macos-14-large
 
     steps:
       - uses: actions/checkout@v5
@@ -13,22 +13,20 @@ jobs:
       - name: Select Xamarin SDK (if available)
         run: |
           if [ -x "$VM_ASSETS/select-xamarin-sdk-v2.sh" ]; then
-            $VM_ASSETS/select-xamarin-sdk-v2.sh --mono=6.12 --android=13.2
+            "$VM_ASSETS/select-xamarin-sdk-v2.sh" --mono=6.12 --android=13.2
           fi
 
-      - name: Add Mono tools to PATH
-        run: echo "/Library/Frameworks/Mono.framework/Versions/Current/Commands" >> "$GITHUB_PATH"
-
-      - name: Verify tooling
+      - name: Verify Xamarin toolchain
         run: |
-          command -v msbuild
-          msbuild -version
+          /Library/Frameworks/Mono.framework/Versions/Current/Commands/msbuild -version
+          /Library/Frameworks/Mono.framework/Versions/Current/Commands/nuget help >/dev/null
+          test -f /Library/Frameworks/Xamarin.Android.framework/Versions/Current/lib/xbuild/Xamarin/Android/Xamarin.Android.CSharp.targets
 
-      - name: Restore packages
-        run: msbuild Client/suota_pgp/suota_pgp.sln /t:Restore /p:Configuration=Debug
+      - name: Restore NuGet
+        run: /Library/Frameworks/Mono.framework/Versions/Current/Commands/nuget restore Client/suota_pgp/suota_pgp.sln
 
       - name: Build APK
-        run: msbuild Client/suota_pgp/suota_pgp/suota_pgp.Android/suota_pgp.Android.csproj /t:PackageForAndroid /p:Configuration=Debug
+        run: /Library/Frameworks/Mono.framework/Versions/Current/Commands/msbuild Client/suota_pgp/suota_pgp/suota_pgp.Android/suota_pgp.Android.csproj /t:PackageForAndroid /p:Configuration=Debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
