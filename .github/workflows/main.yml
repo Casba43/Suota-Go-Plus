@@ -1,0 +1,29 @@
+name: Build Xamarin Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15-intel
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Select Xamarin SDK (if available)
+        run: |
+          if [ -x "$VM_ASSETS/select-xamarin-sdk-v2.sh" ]; then
+            $VM_ASSETS/select-xamarin-sdk-v2.sh --mono=6.12 --android=13.2
+          fi
+
+      - name: Restore NuGet
+        run: nuget restore Client/suota_pgp/suota_pgp.sln
+
+      - name: Build APK
+        run: msbuild Client/suota_pgp/suota_pgp/suota_pgp.Android/suota_pgp.Android.csproj /t:PackageForAndroid /p:Configuration=Debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: suota-apk
+          path: Client/suota_pgp/suota_pgp/suota_pgp.Android/bin/Debug/*.apk
