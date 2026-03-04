@@ -16,8 +16,16 @@ jobs:
             $VM_ASSETS/select-xamarin-sdk-v2.sh --mono=6.12 --android=13.2
           fi
 
-      - name: Restore NuGet
-        run: nuget restore Client/suota_pgp/suota_pgp.sln
+      - name: Add Mono tools to PATH
+        run: echo "/Library/Frameworks/Mono.framework/Versions/Current/Commands" >> "$GITHUB_PATH"
+
+      - name: Verify tooling
+        run: |
+          command -v msbuild
+          msbuild -version
+
+      - name: Restore packages
+        run: msbuild Client/suota_pgp/suota_pgp.sln /t:Restore /p:Configuration=Debug
 
       - name: Build APK
         run: msbuild Client/suota_pgp/suota_pgp/suota_pgp.Android/suota_pgp.Android.csproj /t:PackageForAndroid /p:Configuration=Debug
